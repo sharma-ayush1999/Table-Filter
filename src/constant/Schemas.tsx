@@ -11,7 +11,15 @@ export interface Data {
   image: string;
   email: string;
   phone: string;
-  premium: Boolean;
+  premium: string;
+  bid: number | undefined;
+}
+
+export interface bids {
+  id: string;
+  carTitle: string;
+  amount: number;
+  created: string;
 }
 
 export interface CustomerData {

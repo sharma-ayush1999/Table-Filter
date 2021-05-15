@@ -9,6 +9,7 @@ import TableHead from "@material-ui/core/TableHead";
 import TablePagination from "@material-ui/core/TablePagination";
 import TableRow from "@material-ui/core/TableRow";
 import Avatar from "@material-ui/core/Avatar";
+import Switch from "@material-ui/core/Switch";
 import { Column, CustomerData, Data } from "../constant/Schemas";
 import { getRequest } from "../constant/Api";
 
@@ -46,9 +47,10 @@ function createData(
   image: string,
   email: string,
   phone: string,
-  premium: Boolean
+  premium: string,
+  bid: number | undefined
 ): Data {
-  return { customerName, image, email, phone, premium };
+  return { customerName, image, email, phone, premium, bid };
 }
 
 const useStyles = makeStyles({
@@ -56,7 +58,7 @@ const useStyles = makeStyles({
     width: "100%",
   },
   container: {
-    maxHeight: '92vh',
+    maxHeight: "92vh",
   },
 });
 
@@ -65,7 +67,12 @@ export const CustomTable = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [customerDetails, setCustomerDetails] = useState<CustomerData[]>();
+  const [customerData, setCustomerData] = useState<any>();
   const [showAlert, setShowAlert] = useState(false);
+  const [state, setState] = React.useState({
+    checkedA: true,
+    checkedB: false,
+  });
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -78,18 +85,51 @@ export const CustomTable = () => {
     setPage(0);
   };
 
+  const filterBids = (bids: any, status = 0) => {
+    const amountArray = bids?.map((item: any) => item?.amount);
+    const maxBid = Math.max.apply(Math, amountArray);
+    const minBid = Math.min.apply(Math, amountArray);
+    if (status) {
+      if (minBid > 0) {
+        return minBid;
+      }
+      return 0;
+    } else {
+      if (maxBid > 0) {
+        return maxBid;
+      }
+      return 0;
+    }
+  };
+
+  const catchDataChange = (status: number) => {
+    setCustomerDetails(
+      customerData?.map((item: CustomerData) => {
+        return createData(
+          item?.firstname + " " + item?.lastname,
+          item?.avatarUrl,
+          item?.email,
+          item?.phone,
+          item?.hasPremium ? "True" : "False",
+          filterBids(item?.bids, status)
+        );
+      })
+    );
+  };
+
   const getCustomerData = async () => {
     await getRequest().then((res: any) => {
       if (res.status === 200) {
-        setCustomerDetails(res?.data);
+        setCustomerData(res?.data);
         setCustomerDetails(
-          res?.data.map((item: CustomerData) => {
+          res?.data?.map((item: CustomerData) => {
             return createData(
               item?.firstname + " " + item?.lastname,
               item?.avatarUrl,
               item?.email,
               item?.phone,
-              item?.hasPremium
+              item?.hasPremium ? "True" : "False",
+              filterBids(item?.bids)
             );
           })
         );
@@ -101,6 +141,14 @@ export const CustomTable = () => {
   useEffect(() => {
     getCustomerData();
   }, []);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setState({ ...state, [event.target.name]: event.target.checked });
+    if (!event.target.checked) {
+      return catchDataChange(0);
+    }
+    return catchDataChange(1);
+  };
 
   return (
     <Paper className={classes.root}>
@@ -115,6 +163,17 @@ export const CustomTable = () => {
                   style={{ minWidth: column.minWidth }}
                 >
                   {column.label}
+                  {column.id === "bid" ? (
+                    <Switch
+                      checked={state.checkedB}
+                      onChange={handleChange}
+                      color="primary"
+                      name="checkedB"
+                      inputProps={{ "aria-label": "primary checkbox" }}
+                    />
+                  ) : (
+                    <></>
+                  )}
                 </TableCell>
               ))}
             </TableRow>
