@@ -10,6 +10,7 @@ import TablePagination from "@material-ui/core/TablePagination";
 import TableRow from "@material-ui/core/TableRow";
 import Avatar from "@material-ui/core/Avatar";
 import Switch from "@material-ui/core/Switch";
+import LinearProgress from "@material-ui/core/LinearProgress";
 import { Column, CustomerData, Data } from "../constant/Schemas";
 import { getRequest } from "../constant/Api";
 
@@ -19,7 +20,7 @@ const columns: Column[] = [
     label: "Customer Name",
     minWidth: 170,
   },
-  { id: "image", label: "Image", minWidth: 50 },
+  { id: "image", label: "Image", minWidth: 170 },
   {
     id: "email",
     label: "Email",
@@ -28,7 +29,7 @@ const columns: Column[] = [
   {
     id: "phone",
     label: "Phone",
-    minWidth: 100,
+    minWidth: 170,
   },
   {
     id: "premium",
@@ -68,6 +69,7 @@ export const CustomTable = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [customerDetails, setCustomerDetails] = useState<CustomerData[]>();
   const [customerData, setCustomerData] = useState<any>();
+  const [isDataLoaded, setIsDataLoaded] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
   const [state, setState] = React.useState({
     checkedA: true,
@@ -86,20 +88,16 @@ export const CustomTable = () => {
   };
 
   const filterBids = (bids: any, status = 0) => {
+    if (bids?.length === 0) {
+      return 0;
+    }
     const amountArray = bids?.map((item: any) => item?.amount);
     const maxBid = Math.max.apply(Math, amountArray);
     const minBid = Math.min.apply(Math, amountArray);
     if (status) {
-      if (minBid > 0) {
-        return minBid;
-      }
-      return 0;
-    } else {
-      if (maxBid > 0) {
-        return maxBid;
-      }
-      return 0;
+      return minBid;
     }
+    return maxBid;
   };
 
   const catchDataChange = (status: number) => {
@@ -120,6 +118,7 @@ export const CustomTable = () => {
   const getCustomerData = async () => {
     await getRequest().then((res: any) => {
       if (res.status === 200) {
+        setIsDataLoaded(false);
         setCustomerData(res?.data);
         setCustomerDetails(
           res?.data?.map((item: CustomerData) => {
@@ -178,6 +177,13 @@ export const CustomTable = () => {
               ))}
             </TableRow>
           </TableHead>
+          {isDataLoaded ? (
+            <div style={{ position: "absolute", width: "100%" }}>
+              <LinearProgress />
+            </div>
+          ) : (
+            <></>
+          )}
           <TableBody>
             {customerDetails
               ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
