@@ -12,7 +12,12 @@ import Avatar from "@material-ui/core/Avatar";
 import Switch from "@material-ui/core/Switch";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import Checkbox from "@material-ui/core/Checkbox";
-import { Column, CustomerData, Data } from "../constant/Schemas";
+import {
+  Column,
+  CustomerData,
+  SimplifiedData,
+  Data,
+} from "../constant/Schemas";
 import { getRequest } from "../constant/Api";
 
 const columns: Column[] = [
@@ -60,6 +65,20 @@ function createData(
   return { customerName, image, email, phone, premium, bid };
 }
 
+function createDataOfMinMaxBid(
+  customerName: string,
+  image: string,
+  email: string,
+  phone: string,
+  premium: string,
+  bid: {
+    minBid: number;
+    maxBid: number;
+  }
+): any {
+  return { customerName, image, email, phone, premium, bid };
+}
+
 const useStyles = makeStyles({
   root: {
     width: "100%",
@@ -73,13 +92,13 @@ export const CustomTable = () => {
   const classes = useStyles();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(8);
+  const [customerDetailsWithMinMaxBid, setcustomerDetailsWithMinMaxBid] =
+    useState<SimplifiedData[]>();
   const [customerDetails, setCustomerDetails] = useState<Data[]>();
-  const [customerDetailsBeforeSorting, setCustomerDetailsBeforeSorting] = useState<Data[]>();
-  const [customerData, setCustomerData] = useState<any>();
   const [isDataLoaded, setIsDataLoaded] = useState(true);
-  const [showAlert, setShowAlert] = useState(false);
   const [toggle, setToggle] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
     getServerData();
@@ -109,46 +128,43 @@ export const CustomTable = () => {
     return maxBid;
   };
 
-  const setMinMaxBid = (status: number) => {
-    setCustomerDetails(
-      customerData?.map((item: CustomerData) => {
-        return createData(
-          item?.firstname + " " + item?.lastname,
-          item?.avatarUrl,
-          item?.email,
-          item?.phone,
-          item?.hasPremium ? "True" : "False",
-          filterBids(item?.bids, status)
-        );
-      })
-    );
-  };
-
   const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setToggle(event.target.checked);
-    if (!event.target.checked) {
-      return setMinMaxBid(0);
-    }
-    return setMinMaxBid(1);
+    console.log(customerDetails)
+      setCustomerDetails(
+        customerDetailsWithMinMaxBid?.map((item: any) => {
+          return createData(
+            item?.customerName,
+            item?.image,
+            item?.email,
+            item?.phone,
+            item?.premium,
+            event.target.checked ? item?.bid?.minBid : item?.bid?.maxBid
+          );
+        })
+      );
+
   };
 
   const getServerData = async () => {
     await getRequest().then((res: any) => {
       if (res.status === 200) {
         setIsDataLoaded(false);
-        setCustomerData(res?.data);
-                setCustomerDetailsBeforeSorting(
-                  res?.data?.map((item: CustomerData) => {
-                    return createData(
-                      item?.firstname + " " + item?.lastname,
-                      item?.avatarUrl,
-                      item?.email,
-                      item?.phone,
-                      item?.hasPremium ? "True" : "False",
-                      filterBids(item?.bids)
-                    );
-                  })
-                );
+        setcustomerDetailsWithMinMaxBid(
+          res?.data?.map((item: CustomerData) => {
+            return createDataOfMinMaxBid(
+              item?.firstname + " " + item?.lastname,
+              item?.avatarUrl,
+              item?.email,
+              item?.phone,
+              item?.hasPremium ? "True" : "False",
+              {
+                minBid: filterBids(item?.bids, 1),
+                maxBid: filterBids(item?.bids),
+              }
+            );
+          })
+        );
         setCustomerDetails(
           res?.data?.map((item: CustomerData) => {
             return createData(
@@ -179,12 +195,37 @@ export const CustomTable = () => {
 
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setChecked(event.target.checked);
-    if (event.target.checked) {
-      console.log(customerDetails)
-      return setCustomerDetails(customerDetails?.sort(sortByProperty("bid")));
-    }
-    console.log('Original State')
-    return setCustomerDetails(customerDetailsBeforeSorting);
+      if(event.target.checked){
+        setCustomerDetails(
+          customerDetailsWithMinMaxBid
+            ?.map((item: any) => {
+              return createData(
+                item?.customerName,
+                item?.image,
+                item?.email,
+                item?.phone,
+                item?.premium,
+                toggle ? item?.bid?.minBid : item?.bid?.maxBid
+              );
+            })
+            .sort(sortByProperty("bid"))
+        );
+      }
+      else{
+        setCustomerDetails(
+          customerDetailsWithMinMaxBid
+            ?.map((item: any) => {
+              return createData(
+                item?.customerName,
+                item?.image,
+                item?.email,
+                item?.phone,
+                item?.premium,
+                toggle ? item?.bid?.minBid : item?.bid?.maxBid
+              );
+            })
+        )
+      }
   };
 
   return (

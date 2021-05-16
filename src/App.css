@@ -5,3 +5,7 @@
 .MuiButtonBase-root{
   display:  flex !important;
 }
+
+.MuiTablePagination-actions {
+  display:  flex !important;
+}

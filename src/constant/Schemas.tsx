@@ -15,6 +15,18 @@ export interface Data {
   bid: number | undefined;
 }
 
+export interface SimplifiedData {
+  customerName: string;
+  image: string;
+  email: string;
+  phone: string;
+  premium: string;
+  bid: {
+    minBid: number;
+    maxBid: number;
+  };
+}
+
 export interface bids {
   id: string;
   carTitle: string;
