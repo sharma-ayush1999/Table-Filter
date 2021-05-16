@@ -9,3 +9,13 @@
 .MuiTablePagination-actions {
   display:  flex !important;
 }
+
+.MuiCardContent-root{
+  display: flex;
+  text-align: center;
+  padding-top: 0 !important;
+}
+
+p{
+  margin: 0 !important;
+}
