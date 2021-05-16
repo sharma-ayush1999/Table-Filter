@@ -19,6 +19,7 @@ import TableCell from "@material-ui/core/TableCell";
 import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
+import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import { useHistory } from "react-router-dom";
 
@@ -65,68 +66,80 @@ export const Dashboard = () => {
   }, []);
 
   return (
-    <Card className={classes.root}>
-      <CardHeader
-        avatar={
-          <Avatar
-            // src={individualData?.row?.image}
-            aria-label="recipe"
-            className={classes.avatar}
-          >
-            {individualData?.row?.customerName.slice(0, 1)}
-          </Avatar>
-        }
-        title={individualData?.row?.customerName}
-        subheader={`Premium: ${individualData?.row?.premium}`}
-      />
-      <CardMedia className={classes.media} image={individualData?.row?.image} />
-      <CardContent>
-        <p>
-          <span style={{ fontWeight: 500 }}>Email:</span>{" "}
-          {individualData?.row?.email}
-        </p>
-        <p>
-          <span style={{ fontWeight: 500 }}>Phone:</span>{" "}
-          {individualData?.row?.phone}
-        </p>
-      </CardContent>
-      <CardActions disableSpacing>
-        <IconButton
-          className={clsx(classes.expand, {
-            [classes.expandOpen]: expanded,
-          })}
-          onClick={handleExpandClick}
-          aria-expanded={expanded}
-          aria-label="show more"
-        >
-          <ExpandMoreIcon />
-        </IconButton>
-        Show All Bids
-      </CardActions>
-      <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <CardContent style={{ display: "flex", flexWrap: "wrap" }}>
-          <TableContainer component={Paper}>
-            <Table aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Car Title</TableCell>
-                  <TableCell>Amount</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {individualData?.bidArray?.map((item: any) => {
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.carTitle}</TableCell>
-                      <TableCell>{item.amount}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+    <>
+      <Button
+        onClick={() => history.goBack()}
+        variant="contained"
+        color="primary"
+      >
+        Go Back
+      </Button>
+      <Card className={classes.root}>
+        <CardHeader
+          avatar={
+            <Avatar
+              // src={individualData?.row?.image}
+              aria-label="recipe"
+              className={classes.avatar}
+            >
+              {individualData?.row?.customerName.slice(0, 1)}
+            </Avatar>
+          }
+          title={individualData?.row?.customerName}
+          subheader={`Premium: ${individualData?.row?.premium}`}
+        />
+        <CardMedia
+          className={classes.media}
+          image={individualData?.row?.image}
+        />
+        <CardContent>
+          <p style={{ padding: "5%" }}>
+            <span style={{ fontWeight: 500 }}>Email:</span>{" "}
+            {individualData?.row?.email}
+          </p>
+          <p style={{ padding: "5%" }}>
+            <span style={{ fontWeight: 500 }}>Phone:</span>{" "}
+            {individualData?.row?.phone}
+          </p>
         </CardContent>
-      </Collapse>
-    </Card>
+        <CardActions disableSpacing>
+          <IconButton
+            className={clsx(classes.expand, {
+              [classes.expandOpen]: expanded,
+            })}
+            onClick={handleExpandClick}
+            aria-expanded={expanded}
+            aria-label="show more"
+          >
+            <ExpandMoreIcon />
+          </IconButton>
+          Show All Bids
+        </CardActions>
+        <Collapse in={expanded} timeout="auto" unmountOnExit>
+          <CardContent style={{ display: "flex", flexWrap: "wrap" }}>
+            <TableContainer component={Paper}>
+              <Table aria-label="simple table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Car Title</TableCell>
+                    <TableCell>Amount</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {individualData?.bidArray?.map((item: any) => {
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.carTitle}</TableCell>
+                        <TableCell>{item.amount}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Collapse>
+      </Card>
+    </>
   );
 };
