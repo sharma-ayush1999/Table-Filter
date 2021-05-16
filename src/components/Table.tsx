@@ -12,6 +12,7 @@ import Avatar from "@material-ui/core/Avatar";
 import Switch from "@material-ui/core/Switch";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import Checkbox from "@material-ui/core/Checkbox";
+import Alert from "@material-ui/lab/Alert";
 import {
   Column,
   CustomerData,
@@ -143,8 +144,7 @@ export const CustomTable = () => {
       } else {
         setShowAlert(true);
       }
-      setShowAlert(true);
-    });
+    }).catch(() => setShowAlert(true))
   };
 
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,6 +222,13 @@ export const CustomTable = () => {
           {isDataLoaded ? (
             <div style={{ position: "absolute", width: "100%" }}>
               <LinearProgress />
+            </div>
+          ) : null}
+          {showAlert ? (
+            <div style={{ position: "absolute", width: "100%" }}>
+              <Alert severity="error">
+                This is an error!
+              </Alert>
             </div>
           ) : null}
           <TableBody>
