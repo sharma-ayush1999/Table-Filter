@@ -19,6 +19,7 @@ import {
   Data,
 } from "../constant/Schemas";
 import { getRequest } from "../constant/Api";
+import { createData, createDataOfMinMaxBid, filterBids, sortByProperty } from "../constant/functions";
 
 const columns: Column[] = [
   {
@@ -53,31 +54,6 @@ const columns: Column[] = [
     minWidth: 10,
   },
 ];
-
-function createData(
-  customerName: string,
-  image: string,
-  email: string,
-  phone: string,
-  premium: string,
-  bid: number | undefined
-): Data {
-  return { customerName, image, email, phone, premium, bid };
-}
-
-function createDataOfMinMaxBid(
-  customerName: string,
-  image: string,
-  email: string,
-  phone: string,
-  premium: string,
-  bid: {
-    minBid: number;
-    maxBid: number;
-  }
-): any {
-  return { customerName, image, email, phone, premium, bid };
-}
 
 const useStyles = makeStyles({
   root: {
@@ -115,22 +91,9 @@ export const CustomTable = () => {
     setPage(0);
   };
 
-  const filterBids = (bids: any, status = 0) => {
-    if (bids?.length === 0) {
-      return 0;
-    }
-    const amountArray = bids?.map((item: any) => item?.amount);
-    const maxBid = Math.max.apply(Math, amountArray);
-    const minBid = Math.min.apply(Math, amountArray);
-    if (status) {
-      return minBid;
-    }
-    return maxBid;
-  };
-
   const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setToggle(event.target.checked);
-    console.log(customerDetails)
+    setChecked(false);
       setCustomerDetails(
         customerDetailsWithMinMaxBid?.map((item: any) => {
           return createData(
@@ -183,15 +146,6 @@ export const CustomTable = () => {
       setShowAlert(true);
     });
   };
-
-  function sortByProperty(property: string) {
-    return function (a: any, b: any) {
-      if (a[property] > b[property]) return 1;
-      else if (a[property] < b[property]) return -1;
-
-      return 0;
-    };
-  }
 
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setChecked(event.target.checked);
