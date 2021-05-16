@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import Table from "@material-ui/core/Table";
@@ -13,7 +13,7 @@ import Switch from "@material-ui/core/Switch";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import Checkbox from "@material-ui/core/Checkbox";
 import Alert from "@material-ui/lab/Alert";
-import {useHistory} from 'react-router-dom';
+import { useHistory } from "react-router-dom";
 import {
   Column,
   CustomerData,
@@ -21,8 +21,12 @@ import {
   Data,
 } from "../constant/Schemas";
 import { getRequest } from "../constant/Api";
-import { createData, createDataOfMinMaxBid, filterBids, sortByProperty } from "../constant/functions";
-
+import {
+  createData,
+  createDataOfMinMaxBid,
+  filterBids,
+  sortByProperty,
+} from "../constant/functions";
 
 const columns: Column[] = [
   {
@@ -67,7 +71,6 @@ const useStyles = makeStyles({
   },
 });
 
-
 export const CustomTable: React.FC = () => {
   const history = useHistory();
   const classes = useStyles();
@@ -100,6 +103,78 @@ export const CustomTable: React.FC = () => {
   const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setToggle(event.target.checked);
     setChecked(false);
+    setCustomerDetails(
+      customerDetailsWithMinMaxBid?.map((item: any) => {
+        return createData(
+          item?.customerName,
+          item?.image,
+          item?.email,
+          item?.phone,
+          item?.premium,
+          event.target.checked ? item?.bid?.minBid : item?.bid?.maxBid
+        );
+      })
+    );
+  };
+
+  const getServerData = async () => {
+    await getRequest()
+      .then((res: any) => {
+        if (res.status === 200) {
+          setBidArray(res?.data?.map((data: CustomerData) => data.bids));
+          setIsDataLoaded(false);
+          setcustomerDetailsWithMinMaxBid(
+            res?.data?.map((item: CustomerData) => {
+              return createDataOfMinMaxBid(
+                item?.firstname + " " + item?.lastname,
+                item?.avatarUrl,
+                item?.email,
+                item?.phone,
+                item?.hasPremium ? "True" : "False",
+                {
+                  minBid: filterBids(item?.bids, 1),
+                  maxBid: filterBids(item?.bids),
+                }
+              );
+            })
+          );
+          setCustomerDetails(
+            res?.data?.map((item: CustomerData) => {
+              return createData(
+                item?.firstname + " " + item?.lastname,
+                item?.avatarUrl,
+                item?.email,
+                item?.phone,
+                item?.hasPremium ? "Yes" : "No",
+                filterBids(item?.bids)
+              );
+            })
+          );
+        } else {
+          setShowAlert(true);
+        }
+      })
+      .catch(() => setShowAlert(true));
+  };
+
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setChecked(event.target.checked);
+    if (event.target.checked) {
+      setCustomerDetails(
+        customerDetailsWithMinMaxBid
+          ?.map((item: any) => {
+            return createData(
+              item?.customerName,
+              item?.image,
+              item?.email,
+              item?.phone,
+              item?.premium,
+              toggle ? item?.bid?.minBid : item?.bid?.maxBid
+            );
+          })
+          .sort(sortByProperty("bid"))
+      );
+    } else {
       setCustomerDetails(
         customerDetailsWithMinMaxBid?.map((item: any) => {
           return createData(
@@ -108,178 +183,105 @@ export const CustomTable: React.FC = () => {
             item?.email,
             item?.phone,
             item?.premium,
-            event.target.checked ? item?.bid?.minBid : item?.bid?.maxBid
+            toggle ? item?.bid?.minBid : item?.bid?.maxBid
           );
         })
       );
-
-  };
-
-  const getServerData = async () => {
-    await getRequest().then((res: any) => {
-      if (res.status === 200) {
-        setBidArray(res?.data?.map((data: CustomerData) => data.bids))
-        setIsDataLoaded(false);
-        setcustomerDetailsWithMinMaxBid(
-          res?.data?.map((item: CustomerData) => {
-            return createDataOfMinMaxBid(
-              item?.firstname + " " + item?.lastname,
-              item?.avatarUrl,
-              item?.email,
-              item?.phone,
-              item?.hasPremium ? "True" : "False",
-              {
-                minBid: filterBids(item?.bids, 1),
-                maxBid: filterBids(item?.bids),
-              }
-            );
-          })
-        );
-        setCustomerDetails(
-          res?.data?.map((item: CustomerData) => {
-            return createData(
-              item?.firstname + " " + item?.lastname,
-              item?.avatarUrl,
-              item?.email,
-              item?.phone,
-              item?.hasPremium ? "Yes" : "No",
-              filterBids(item?.bids)
-            );
-          })
-        );
-      } else {
-        setShowAlert(true);
-      }
-    }).catch(() => setShowAlert(true))
-  };
-
-  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setChecked(event.target.checked);
-      if(event.target.checked){
-        setCustomerDetails(
-          customerDetailsWithMinMaxBid
-            ?.map((item: any) => {
-              return createData(
-                item?.customerName,
-                item?.image,
-                item?.email,
-                item?.phone,
-                item?.premium,
-                toggle ? item?.bid?.minBid : item?.bid?.maxBid
-              );
-            })
-            .sort(sortByProperty("bid"))
-        );
-      }
-      else{
-        setCustomerDetails(
-          customerDetailsWithMinMaxBid
-            ?.map((item: any) => {
-              return createData(
-                item?.customerName,
-                item?.image,
-                item?.email,
-                item?.phone,
-                item?.premium,
-                toggle ? item?.bid?.minBid : item?.bid?.maxBid
-              );
-            })
-        )
-      }
+    }
   };
 
   const routeToDashboard = (row: any, bidArray: any) => {
-    history.push("/dashboard",{row, bidArray})
-  }
+    history.push("/dashboard", { row, bidArray });
+  };
 
   return (
-      <Paper className={classes.root}>
-        <TableContainer className={classes.container}>
-          <Table stickyHeader aria-label="sticky table">
-            <TableHead>
-              <TableRow>
-                {columns.map((column: any) => (
-                  <TableCell
-                    key={column.id}
-                    align={column.align}
-                    style={{ minWidth: column.minWidth }}
-                  >
-                    {column.label}
-                    {column.id === "bid" ? (
-                      <>
-                        <Switch
-                          checked={toggle}
-                          onChange={handleToggleChange}
-                          color="primary"
-                          name="checkedB"
-                          inputProps={{ "aria-label": "primary checkbox" }}
-                        />
-                      </>
-                    ) : column.id === "sort" ? (
-                      <Checkbox
+    <Paper className={classes.root}>
+      <TableContainer className={classes.container}>
+        <Table stickyHeader aria-label="sticky table">
+          <TableHead>
+            <TableRow>
+              {columns.map((column: any) => (
+                <TableCell
+                  key={column.id}
+                  align={column.align}
+                  style={{ minWidth: column.minWidth }}
+                >
+                  {column.label}
+                  {column.id === "bid" ? (
+                    <>
+                      <Switch
+                        checked={toggle}
+                        onChange={handleToggleChange}
                         color="primary"
-                        checked={checked}
-                        onChange={handleCheckboxChange}
+                        name="checkedB"
                         inputProps={{ "aria-label": "primary checkbox" }}
                       />
-                    ) : (
-                      <></>
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            {isDataLoaded ? (
-              <div style={{ position: "absolute", width: "100%" }}>
-                <LinearProgress />
-              </div>
-            ) : null}
-            {showAlert ? (
-              <div style={{ position: "absolute", width: "100%" }}>
-                <Alert severity="error">This is an error!</Alert>
-              </div>
-            ) : null}
-            <TableBody>
-              {customerDetails
-                ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row: any, key: any) => {
-                  return (
-                    <TableRow
-                      onClick={() => routeToDashboard(row, bidArray[key])}
-                      hover
-                      role="checkbox"
-                      tabIndex={-1}
-                      key={row.code}
-                    >
-                      {columns?.map((column: any) => {
-                        const value = row[column.id];
-                        return (
-                          <TableCell key={column.id} align={column.align}>
-                            {column.id === "image" ? (
-                              <Avatar alt="Remy Sharp" src={value} />
-                            ) : column.format && typeof value === "number" ? (
-                              column.format(value)
-                            ) : (
-                              value
-                            )}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[8]}
-          component="div"
-          count={customerDetails?.length || 1}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onChangePage={handleChangePage}
-          onChangeRowsPerPage={handleChangeRowsPerPage}
-        />
-      </Paper>
+                    </>
+                  ) : column.id === "sort" ? (
+                    <Checkbox
+                      color="primary"
+                      checked={checked}
+                      onChange={handleCheckboxChange}
+                      inputProps={{ "aria-label": "primary checkbox" }}
+                    />
+                  ) : (
+                    <></>
+                  )}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          {isDataLoaded ? (
+            <div style={{ position: "absolute", width: "100%" }}>
+              <LinearProgress />
+            </div>
+          ) : null}
+          {showAlert ? (
+            <div style={{ position: "absolute", width: "100%" }}>
+              <Alert severity="error">This is an error!</Alert>
+            </div>
+          ) : null}
+          <TableBody>
+            {customerDetails
+              ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((row: any, key: any) => {
+                return (
+                  <TableRow
+                    onClick={() => routeToDashboard(row, bidArray[key])}
+                    hover
+                    role="checkbox"
+                    tabIndex={-1}
+                    key={row.code}
+                  >
+                    {columns?.map((column: any) => {
+                      const value = row[column.id];
+                      return (
+                        <TableCell key={column.id} align={column.align}>
+                          {column.id === "image" ? (
+                            <Avatar alt="Remy Sharp" src={value} />
+                          ) : column.format && typeof value === "number" ? (
+                            column.format(value)
+                          ) : (
+                            value
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                );
+              })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[8]}
+        component="div"
+        count={customerDetails?.length || 1}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onChangePage={handleChangePage}
+        onChangeRowsPerPage={handleChangeRowsPerPage}
+      />
+    </Paper>
   );
 };
