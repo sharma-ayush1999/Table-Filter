@@ -1,5 +1,5 @@
 export interface Column {
-  id: "customerName" | "image" | "email" | "phone" | "premium" | "bid";
+  id: "customerName" | "image" | "email" | "phone" | "premium" | "bid" | "sort";
   label: string;
   minWidth?: number;
   align?: "right";

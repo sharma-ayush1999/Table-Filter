@@ -1,3 +1,7 @@
 .MuiSwitch-root{
   display: flex !important;
 }
+
+.MuiButtonBase-root{
+  display:  flex !important;
+}

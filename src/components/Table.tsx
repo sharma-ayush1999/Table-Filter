@@ -11,6 +11,7 @@ import TableRow from "@material-ui/core/TableRow";
 import Avatar from "@material-ui/core/Avatar";
 import Switch from "@material-ui/core/Switch";
 import LinearProgress from "@material-ui/core/LinearProgress";
+import Checkbox from "@material-ui/core/Checkbox";
 import { Column, CustomerData, Data } from "../constant/Schemas";
 import { getRequest } from "../constant/Api";
 
@@ -39,7 +40,12 @@ const columns: Column[] = [
   {
     id: "bid",
     label: "Max/Min bid",
-    minWidth: 170,
+    minWidth: 100,
+  },
+  {
+    id: "sort",
+    label: "Sort By Bid",
+    minWidth: 10,
   },
 ];
 
@@ -66,15 +72,18 @@ const useStyles = makeStyles({
 export const CustomTable = () => {
   const classes = useStyles();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [customerDetails, setCustomerDetails] = useState<CustomerData[]>();
+  const [rowsPerPage, setRowsPerPage] = useState(8);
+  const [customerDetails, setCustomerDetails] = useState<Data[]>();
+  const [customerDetailsBeforeSorting, setCustomerDetailsBeforeSorting] = useState<Data[]>();
   const [customerData, setCustomerData] = useState<any>();
   const [isDataLoaded, setIsDataLoaded] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
-  const [state, setState] = React.useState({
-    checkedA: true,
-    checkedB: false,
-  });
+  const [toggle, setToggle] = useState(false);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    getServerData();
+  }, []);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -100,7 +109,7 @@ export const CustomTable = () => {
     return maxBid;
   };
 
-  const catchDataChange = (status: number) => {
+  const setMinMaxBid = (status: number) => {
     setCustomerDetails(
       customerData?.map((item: CustomerData) => {
         return createData(
@@ -115,11 +124,31 @@ export const CustomTable = () => {
     );
   };
 
-  const getCustomerData = async () => {
+  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setToggle(event.target.checked);
+    if (!event.target.checked) {
+      return setMinMaxBid(0);
+    }
+    return setMinMaxBid(1);
+  };
+
+  const getServerData = async () => {
     await getRequest().then((res: any) => {
       if (res.status === 200) {
         setIsDataLoaded(false);
         setCustomerData(res?.data);
+                setCustomerDetailsBeforeSorting(
+                  res?.data?.map((item: CustomerData) => {
+                    return createData(
+                      item?.firstname + " " + item?.lastname,
+                      item?.avatarUrl,
+                      item?.email,
+                      item?.phone,
+                      item?.hasPremium ? "True" : "False",
+                      filterBids(item?.bids)
+                    );
+                  })
+                );
         setCustomerDetails(
           res?.data?.map((item: CustomerData) => {
             return createData(
@@ -132,21 +161,30 @@ export const CustomTable = () => {
             );
           })
         );
+      } else {
+        setShowAlert(true);
       }
       setShowAlert(true);
     });
   };
 
-  useEffect(() => {
-    getCustomerData();
-  }, []);
+  function sortByProperty(property: string) {
+    return function (a: any, b: any) {
+      if (a[property] > b[property]) return 1;
+      else if (a[property] < b[property]) return -1;
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setState({ ...state, [event.target.name]: event.target.checked });
-    if (!event.target.checked) {
-      return catchDataChange(0);
+      return 0;
+    };
+  }
+
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setChecked(event.target.checked);
+    if (event.target.checked) {
+      console.log(customerDetails)
+      return setCustomerDetails(customerDetails?.sort(sortByProperty("bid")));
     }
-    return catchDataChange(1);
+    console.log('Original State')
+    return setCustomerDetails(customerDetailsBeforeSorting);
   };
 
   return (
@@ -163,11 +201,20 @@ export const CustomTable = () => {
                 >
                   {column.label}
                   {column.id === "bid" ? (
-                    <Switch
-                      checked={state.checkedB}
-                      onChange={handleChange}
+                    <>
+                      <Switch
+                        checked={toggle}
+                        onChange={handleToggleChange}
+                        color="primary"
+                        name="checkedB"
+                        inputProps={{ "aria-label": "primary checkbox" }}
+                      />
+                    </>
+                  ) : column.id === "sort" ? (
+                    <Checkbox
                       color="primary"
-                      name="checkedB"
+                      checked={checked}
+                      onChange={handleCheckboxChange}
                       inputProps={{ "aria-label": "primary checkbox" }}
                     />
                   ) : (
@@ -181,9 +228,7 @@ export const CustomTable = () => {
             <div style={{ position: "absolute", width: "100%" }}>
               <LinearProgress />
             </div>
-          ) : (
-            <></>
-          )}
+          ) : null}
           <TableBody>
             {customerDetails
               ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
@@ -211,7 +256,7 @@ export const CustomTable = () => {
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={[10]}
+        rowsPerPageOptions={[8]}
         component="div"
         count={customerDetails?.length || 1}
         rowsPerPage={rowsPerPage}
